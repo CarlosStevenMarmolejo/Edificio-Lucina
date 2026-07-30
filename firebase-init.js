@@ -23,12 +23,12 @@
 //    en Firebase Authentication en vez de las contraseñas propias de la app.
 
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID",
+  apiKey: "AIzaSyA9-mqa1Awy6X9_FEzGFCd5qoXUB86uypU",
+  authDomain: "edificio-lucina.firebaseapp.com",
+  projectId: "edificio-lucina",
+  storageBucket: "edificio-lucina.firebasestorage.app",
+  messagingSenderId: "388716975016",
+  appId: "1:388716975016:web:9bca0d271a1aa256b0c39d",
 };
 
 firebase.initializeApp(firebaseConfig);
