@@ -75,7 +75,23 @@ const STATE = {
     // Datos cargados desde Firebase
     //-------------------------------------
 
-    database: null,
+    database: {
+
+    building: null,
+
+    apartments: [],
+
+    movements: [],
+
+    expenses: [],
+
+    reports: [],
+
+    users: [],
+
+    settings: {}
+
+},
 
     //-------------------------------------
     // Dashboard
