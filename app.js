@@ -718,3 +718,982 @@ function emptyState(
     `;
 
 }
+/*=========================================================
+=              FIREBASE Y NÚCLEO DE LA APP                =
+=========================================================*/
+
+/**
+ * Referencias a Firestore
+ */
+
+const BuildingRef = db.collection("building");
+
+const ApartmentsRef = db.collection("apartments");
+
+const MovementsRef = db.collection("movements");
+
+const ExpensesRef = db.collection("expenses");
+
+const UsersRef = db.collection("users");
+
+const SettingsRef = db.collection("settings");
+
+
+/*=========================================================
+=                CARGA DE INFORMACIÓN                     =
+=========================================================*/
+
+async function loadDatabase(){
+
+    try{
+
+        renderLoading();
+
+        await Promise.all([
+
+            loadBuilding(),
+
+            loadApartments(),
+
+            loadMovements(),
+
+            loadExpenses(),
+
+            loadUsers(),
+
+            loadSettings()
+
+        ]);
+
+        render();
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        renderConnectionError(error);
+
+    }
+
+}
+
+
+/*=========================================================
+=                  FIRESTORE                              =
+=========================================================*/
+
+async function loadBuilding(){
+
+    const snapshot = await BuildingRef.get();
+
+    STATE.database.building = snapshot.docs.map(doc=>({
+
+        id:doc.id,
+
+        ...doc.data()
+
+    }));
+
+}
+
+async function loadApartments(){
+
+    const snapshot = await ApartmentsRef.get();
+
+    STATE.database.apartments = snapshot.docs.map(doc=>({
+
+        id:doc.id,
+
+        ...doc.data()
+
+    }));
+
+}
+
+async function loadMovements(){
+
+    const snapshot = await MovementsRef.get();
+
+    STATE.database.movements = snapshot.docs.map(doc=>({
+
+        id:doc.id,
+
+        ...doc.data()
+
+    }));
+
+}
+
+async function loadExpenses(){
+
+    const snapshot = await ExpensesRef.get();
+
+    STATE.database.expenses = snapshot.docs.map(doc=>({
+
+        id:doc.id,
+
+        ...doc.data()
+
+    }));
+
+}
+
+async function loadUsers(){
+
+    const snapshot = await UsersRef.get();
+
+    STATE.database.users = snapshot.docs.map(doc=>({
+
+        id:doc.id,
+
+        ...doc.data()
+
+    }));
+
+}
+
+async function loadSettings(){
+
+    const snapshot = await SettingsRef.get();
+
+    STATE.database.settings = snapshot.docs.map(doc=>({
+
+        id:doc.id,
+
+        ...doc.data()
+
+    }));
+
+}
+
+
+/*=========================================================
+=                    RENDER                               =
+=========================================================*/
+
+function render(){
+
+    if(!STATE.session.logged){
+
+        return renderLogin();
+
+    }
+
+    switch(STATE.navigation.page){
+
+        case "dashboard":
+
+            return renderDashboard();
+
+        default:
+
+            return renderDashboard();
+
+    }
+
+}
+
+
+/*=========================================================
+=                  PANTALLAS BASE                         =
+=========================================================*/
+
+function renderLoading(){
+
+    renderApp(
+
+        createLoader(
+
+            "Conectando con Firebase..."
+
+        )
+
+    );
+
+}
+
+
+function renderConnectionError(error){
+
+    renderApp(
+
+        `
+
+        <div class="page-wrap">
+
+            ${createCard({
+
+                title:"Error de conexión",
+
+                body:`
+
+                    <p>
+
+                        No fue posible conectarse con Firebase.
+
+                    </p>
+
+                    <br>
+
+                    <small>
+
+                        ${error.message}
+
+                    </small>
+
+                    <br><br>
+
+                    ${createButton({
+
+                        text:"Reintentar",
+
+                        action:"reload",
+
+                        icon:"fa-solid fa-rotate-right"
+
+                    })}
+
+                `
+
+            })}
+
+        </div>
+
+        `
+
+    );
+
+}
+
+
+/*=========================================================
+=                    INIT                                 =
+=========================================================*/
+
+document.addEventListener(
+
+    "DOMContentLoaded",
+
+    ()=>{
+
+        loadDatabase();
+
+    }
+
+);
+/*=========================================================
+=                  MOTOR DE LA APLICACIÓN                 =
+=========================================================*/
+
+/**
+ * Cambia la página actual
+ */
+function navigate(page){
+
+    STATE.navigation.page = page;
+
+    render();
+
+}
+
+/**
+ * Inicia sesión
+ */
+function login(role, apartmentId = null){
+
+    STATE.session.logged = true;
+
+    STATE.session.role = role;
+
+    STATE.session.apartmentId = apartmentId;
+
+    navigate("dashboard");
+
+}
+
+/**
+ * Cierra sesión
+ */
+function logout(){
+
+    STATE.session.logged = false;
+
+    STATE.session.role = null;
+
+    STATE.session.apartmentId = null;
+
+    navigate("login");
+
+}
+
+/**
+ * Devuelve verdadero si el usuario es administrador
+ */
+function isAdmin(){
+
+    return STATE.session.role === "admin";
+
+}
+
+/**
+ * Devuelve verdadero si el usuario es propietario
+ */
+function isOwner(){
+
+    return STATE.session.role === "owner";
+
+}
+
+/**
+ * Apartamento activo
+ */
+function getCurrentApartment(){
+
+    if(!STATE.session.apartmentId){
+
+        return null;
+
+    }
+
+    return STATE.database.apartments.find(
+
+        apartment => apartment.id === STATE.session.apartmentId
+
+    );
+
+}
+
+/**
+ * Reinicia todos los formularios
+ */
+function resetForms(){
+
+    STATE.forms = {
+
+        movement:{},
+
+        apartment:{},
+
+        report:{}
+
+    };
+
+}
+
+/**
+ * Refresca toda la aplicación
+ */
+function refresh(){
+
+    render();
+
+}
+/*=========================================================
+=                 LOGIN DEL SISTEMA                       =
+=========================================================*/
+
+function renderLogin(){
+
+    renderApp(`
+
+    <section class="login-page">
+
+        <div class="login-container">
+
+            <!-- Panel izquierdo -->
+
+            <div class="login-left">
+
+                <img
+                    src="assets/Logo.png"
+                    class="login-logo-large"
+                    alt="Edificio Lucina">
+
+                <h1>
+
+                    Edificio Lucina
+
+                </h1>
+
+                <h2>
+
+                    Sistema Inteligente de Administración
+
+                </h2>
+
+                <p>
+
+                    Administre la cartera, los ingresos, los gastos,
+                    los reportes y la información del edificio desde
+                    cualquier lugar.
+
+                </p>
+
+            </div>
+
+            <!-- Panel derecho -->
+
+            <div class="login-right">
+
+                <div class="login-card">
+
+                    <h3>
+
+                        Bienvenido
+
+                    </h3>
+
+                    <span>
+
+                        Seleccione el tipo de acceso
+
+                    </span>
+
+                    <div class="login-options">
+
+                        <button
+                            class="login-option admin"
+                            id="btnAdmin">
+
+                            <i class="fa-solid fa-user-shield"></i>
+
+                            Administrador
+
+                        </button>
+
+                        <button
+                            class="login-option owner"
+                            id="btnOwner">
+
+                            <i class="fa-solid fa-building-user"></i>
+
+                            Propietario
+
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="loginForm">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="cstm-signature">
+
+            Desarrollado por
+
+            <strong>
+
+                CStM Lab
+
+            </strong>
+
+        </div>
+
+    </section>
+
+    `);
+
+    initializeLogin();
+
+}
+/*=========================================================
+=           INICIALIZAR LOGIN                             =
+=========================================================*/
+
+function initializeLogin(){
+
+    const adminButton = document.getElementById("btnAdmin");
+
+    const ownerButton = document.getElementById("btnOwner");
+
+    adminButton.addEventListener(
+
+        "click",
+
+        renderAdminLogin
+
+    );
+
+    ownerButton.addEventListener(
+
+        "click",
+
+        renderOwnerLogin
+
+    );
+
+}
+/*=========================================================
+=           FORMULARIO ADMINISTRADOR                      =
+=========================================================*/
+
+function renderAdminLogin(){
+
+    const container = document.getElementById("loginForm");
+
+    container.innerHTML = `
+
+        <div class="login-form">
+
+            <label>
+
+                Contraseña del administrador
+
+            </label>
+
+            <input
+                type="password"
+                id="adminPassword"
+                placeholder="Ingrese su contraseña">
+
+            <button
+                class="btn-primary login-submit"
+                id="adminLoginButton">
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                Ingresar
+
+            </button>
+
+            <div
+                id="adminLoginMessage"
+                class="login-message">
+
+            </div>
+
+        </div>
+
+    `;
+
+    document
+        .getElementById("adminLoginButton")
+        .addEventListener("click", loginAdministrator);
+
+}
+
+
+/*=========================================================
+=            FORMULARIO PROPIETARIO                       =
+=========================================================*/
+
+function renderOwnerLogin(){
+
+    const container = document.getElementById("loginForm");
+
+    const apartments = STATE.database.apartments || [];
+
+    container.innerHTML = `
+
+        <div class="login-form">
+
+            <label>
+
+                Apartamento o Local
+
+            </label>
+
+            <select id="ownerApartment">
+
+                <option value="">
+
+                    Seleccione...
+
+                </option>
+
+                ${apartments.map(apartment=>`
+
+                    <option value="${apartment.id}">
+
+                        ${apartment.id}
+
+                    </option>
+
+                `).join("")}
+
+            </select>
+
+            <label>
+
+                Contraseña
+
+            </label>
+
+            <input
+                type="password"
+                id="ownerPassword"
+                placeholder="Ingrese su contraseña">
+
+            <button
+                class="btn-primary login-submit"
+                id="ownerLoginButton">
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                Ingresar
+
+            </button>
+
+            <div
+                id="ownerLoginMessage"
+                class="login-message">
+
+            </div>
+
+        </div>
+
+    `;
+
+    document
+        .getElementById("ownerLoginButton")
+        .addEventListener("click", loginOwner);
+
+}
+/*=========================================================
+=                  LOGIN ADMINISTRADOR                    =
+=========================================================*/
+
+async function loginAdministrator(){
+
+    const password = document
+        .getElementById("adminPassword")
+        .value
+        .trim();
+
+    if(password.length===0){
+
+        return showLoginMessage(
+
+            "adminLoginMessage",
+
+            "Debe ingresar la contraseña.",
+
+            true
+
+        );
+
+    }
+
+    /*
+        Firebase se conectará aquí
+    */
+
+    login("admin");
+
+}
+
+
+/*=========================================================
+=                    LOGIN PROPIETARIO                    =
+=========================================================*/
+
+async function loginOwner(){
+
+    const apartment = document
+        .getElementById("ownerApartment")
+        .value;
+
+    const password = document
+        .getElementById("ownerPassword")
+        .value
+        .trim();
+
+    if(apartment===""){
+
+        return showLoginMessage(
+
+            "ownerLoginMessage",
+
+            "Seleccione un apartamento.",
+
+            true
+
+        );
+
+    }
+
+    if(password.length===0){
+
+        return showLoginMessage(
+
+            "ownerLoginMessage",
+
+            "Ingrese la contraseña.",
+
+            true
+
+        );
+
+    }
+
+    /*
+        Firebase se conectará aquí
+    */
+
+    login(
+
+        "owner",
+
+        apartment
+
+    );
+
+}
+/*=========================================================
+=                 MENSAJES DEL LOGIN                      =
+=========================================================*/
+
+function showLoginMessage(
+
+    id,
+
+    message,
+
+    error=false
+
+){
+
+    const element = document.getElementById(id);
+
+    if(!element) return;
+
+    element.textContent = message;
+
+    element.style.color = error
+        ? "#C62828"
+        : "#2E7D32";
+
+}
+/*=========================================================
+=            VALIDACIÓN DEL ADMINISTRADOR                =
+=========================================================*/
+
+async function loginAdministrator(){
+
+    const password = document
+        .getElementById("adminPassword")
+        .value
+        .trim();
+
+    if(password===""){
+
+        return showLoginMessage(
+
+            "adminLoginMessage",
+
+            "Debe ingresar la contraseña.",
+
+            true
+
+        );
+
+    }
+
+    showLoginMessage(
+
+        "adminLoginMessage",
+
+        "Verificando credenciales..."
+
+    );
+
+    /*
+    ======================================================
+    AQUÍ SE HARÁ LA VALIDACIÓN CON FIREBASE
+    ======================================================
+    */
+
+    setTimeout(()=>{
+
+        createSession({
+
+            role:"admin",
+
+            apartment:null,
+
+            name:"Administrador"
+
+        });
+
+    },700);
+
+}
+
+
+
+/*=========================================================
+=              VALIDACIÓN DEL PROPIETARIO                =
+=========================================================*/
+
+async function loginOwner(){
+
+    const apartment=document
+        .getElementById("ownerApartment")
+        .value;
+
+    const password=document
+        .getElementById("ownerPassword")
+        .value
+        .trim();
+
+    if(apartment===""){
+
+        return showLoginMessage(
+
+            "ownerLoginMessage",
+
+            "Seleccione un apartamento.",
+
+            true
+
+        );
+
+    }
+
+    if(password===""){
+
+        return showLoginMessage(
+
+            "ownerLoginMessage",
+
+            "Debe ingresar la contraseña.",
+
+            true
+
+        );
+
+    }
+
+    showLoginMessage(
+
+        "ownerLoginMessage",
+
+        "Verificando información..."
+
+    );
+
+    /*
+    ======================================================
+    AQUÍ SE VALIDARÁ EL APARTAMENTO EN FIREBASE
+    ======================================================
+    */
+
+    setTimeout(()=>{
+
+        createSession({
+
+            role:"owner",
+
+            apartment,
+
+            name:apartment
+
+        });
+
+    },700);
+
+}
+/*=========================================================
+=                  CREAR SESIÓN                           =
+=========================================================*/
+
+function createSession(user){
+
+    STATE.session.logged=true;
+
+    STATE.session.role=user.role;
+
+    STATE.session.apartmentId=user.apartment;
+
+    STATE.session.user=user;
+
+    sessionStorage.setItem(
+
+        "lucina-session",
+
+        JSON.stringify(user)
+
+    );
+
+    navigate("dashboard");
+
+}
+/*=========================================================
+=               RECUPERAR SESIÓN                          =
+=========================================================*/
+
+function restoreSession(){
+
+    const session=sessionStorage.getItem(
+
+        "lucina-session"
+
+    );
+
+    if(!session){
+
+        return;
+
+    }
+
+    try{
+
+        const user=JSON.parse(session);
+
+        STATE.session.logged=true;
+
+        STATE.session.role=user.role;
+
+        STATE.session.apartmentId=user.apartment;
+
+        STATE.session.user=user;
+
+    }
+
+    catch(error){
+
+        sessionStorage.removeItem(
+
+            "lucina-session"
+
+        );
+
+    }
+
+}
+/*=========================================================
+=                 CERRAR SESIÓN                           =
+=========================================================*/
+
+function logout(){
+
+    sessionStorage.removeItem(
+
+        "lucina-session"
+
+    );
+
+    STATE.session={
+
+        logged:false,
+
+        role:null,
+
+        apartmentId:null,
+
+        user:null
+
+    };
+
+    navigate("login");
+
+}
