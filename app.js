@@ -1699,3 +1699,816 @@ function logout(){
     navigate("login");
 
 }
+/*=========================================================
+=                 DASHBOARD PRINCIPAL                     =
+=========================================================*/
+
+function renderDashboard(){
+
+    if(isAdmin()){
+
+        renderAdministratorDashboard();
+
+        return;
+
+    }
+
+    if(isOwner()){
+
+        renderOwnerDashboard();
+
+        return;
+
+    }
+
+    logout();
+
+}
+
+
+/*=========================================================
+=              DASHBOARD ADMINISTRADOR                    =
+=========================================================*/
+
+function renderAdministratorDashboard(){
+
+    renderApp(`
+
+        <main class="dashboard-page">
+
+            <div id="dashboardHeader"></div>
+
+            <div id="dashboardSidebar"></div>
+
+            <section class="dashboard-content">
+
+                <div id="dashboardCards"></div>
+
+                <div id="dashboardAlerts"></div>
+
+                <div id="dashboardActions"></div>
+
+                <div id="dashboardRecent"></div>
+
+            </section>
+
+            <div id="dashboardFooter"></div>
+
+        </main>
+
+    `);
+
+    renderDashboardHeader();
+
+    renderDashboardSidebar();
+
+    renderDashboardCards();
+
+    renderDashboardAlerts();
+
+    renderDashboardActions();
+
+    renderRecentMovements();
+
+    renderDashboardFooter();
+
+}
+/*=========================================================
+=               HEADER DEL DASHBOARD                      =
+=========================================================*/
+
+function renderDashboardHeader(){
+
+    const container=document.getElementById(
+
+        "dashboardHeader"
+
+    );
+
+    container.innerHTML=`
+
+        <header class="dashboard-header">
+
+            <div>
+
+                <h1>
+
+                    Panel Administrativo
+
+                </h1>
+
+                <span>
+
+                    Edificio Lucina
+
+                </span>
+
+            </div>
+
+            <button
+                class="btn-secondary"
+                onclick="logout()">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                Cerrar sesión
+
+            </button>
+
+        </header>
+
+    `;
+
+}
+/*=========================================================
+=              MENÚ LATERAL                               =
+=========================================================*/
+
+function renderDashboardSidebar(){
+
+    const container=document.getElementById(
+
+        "dashboardSidebar"
+
+    );
+
+    container.innerHTML=`
+
+        <aside class="dashboard-sidebar">
+
+            <button>
+
+                <i class="fa-solid fa-house"></i>
+
+                Inicio
+
+            </button>
+
+            <button>
+
+                <i class="fa-solid fa-money-bill-transfer"></i>
+
+                Movimiento Nuevo
+
+            </button>
+
+            <button>
+
+                <i class="fa-solid fa-building"></i>
+
+                Apartamentos
+
+            </button>
+
+            <button>
+
+                <i class="fa-solid fa-file-lines"></i>
+
+                Historial
+
+            </button>
+
+            <button>
+
+                <i class="fa-solid fa-chart-column"></i>
+
+                Reportes
+
+            </button>
+
+            <button>
+
+                <i class="fa-solid fa-gear"></i>
+
+                Configuración
+
+            </button>
+
+        </aside>
+
+    `;
+
+}
+/*=========================================================
+=                 FOOTER                                  =
+=========================================================*/
+
+function renderDashboardFooter(){
+
+    const container=document.getElementById(
+
+        "dashboardFooter"
+
+    );
+
+    container.innerHTML=`
+
+        <footer class="dashboard-footer">
+
+            Sistema desarrollado por
+
+            <strong>
+
+                CStM Lab
+
+            </strong>
+
+            © 2026
+
+        </footer>
+
+    `;
+
+}
+/*=========================================================
+=              COMPONENTES REUTILIZABLES                  =
+=========================================================*/
+
+
+/**
+ * Tarjeta de métricas
+ */
+
+function createMetricCard(config={}){
+
+    return `
+
+        <article class="metric-card">
+
+            <div class="metric-card-icon">
+
+                <i class="${config.icon || "fa-solid fa-chart-column"}"></i>
+
+            </div>
+
+            <div class="metric-card-content">
+
+                <span class="metric-card-title">
+
+                    ${config.title || ""}
+
+                </span>
+
+                <h2 class="metric-card-value">
+
+                    ${config.value || "$0"}
+
+                </h2>
+
+                ${config.subtitle ? `
+
+                    <small>
+
+                        ${config.subtitle}
+
+                    </small>
+
+                ` : ""}
+
+            </div>
+
+        </article>
+
+    `;
+
+}
+
+
+/*=========================================================
+=                     BOTONES                             =
+=========================================================*/
+
+function createButton(config={}){
+
+    return `
+
+        <button
+
+            class="${config.class || "btn-primary"}"
+
+            id="${config.id || ""}"
+
+            data-action="${config.action || ""}"
+
+        >
+
+            ${config.icon ? `
+
+                <i class="${config.icon}"></i>
+
+            ` : ""}
+
+            ${config.text || "Botón"}
+
+        </button>
+
+    `;
+
+}
+
+
+/*=========================================================
+=                  TÍTULOS DE SECCIÓN                     =
+=========================================================*/
+
+function createSectionTitle(title){
+
+    return `
+
+        <div class="section-title">
+
+            <h2>
+
+                ${title}
+
+            </h2>
+
+        </div>
+
+    `;
+
+}
+
+
+/*=========================================================
+=                     ALERTAS                             =
+=========================================================*/
+
+function createAlert(config={}){
+
+    return `
+
+        <div class="alert-card ${config.type || "info"}">
+
+            <div class="alert-icon">
+
+                <i class="${config.icon || "fa-solid fa-circle-info"}"></i>
+
+            </div>
+
+            <div class="alert-content">
+
+                <strong>
+
+                    ${config.title || ""}
+
+                </strong>
+
+                <p>
+
+                    ${config.message || ""}
+
+                </p>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+/*=========================================================
+=                COMPONENTES DE LAYOUT                    =
+=========================================================*/
+
+
+function createCard(content){
+
+    return `
+
+        <section class="card">
+
+            ${content}
+
+        </section>
+
+    `;
+
+}
+
+
+
+function createDivider(){
+
+    return `
+
+        <hr class="divider">
+
+    `;
+
+}
+
+
+
+function createEmptyState(message){
+
+    return `
+
+        <div class="empty-state">
+
+            <i class="fa-regular fa-folder-open"></i>
+
+            <p>
+
+                ${message}
+
+            </p>
+
+        </div>
+
+    `;
+
+}
+/*=========================================================
+=                UTILIDADES VISUALES                      =
+=========================================================*/
+
+
+function money(value){
+
+    return new Intl.NumberFormat(
+
+        "es-CO",
+
+        {
+
+            style:"currency",
+
+            currency:"COP",
+
+            maximumFractionDigits:0
+
+        }
+
+    ).format(value || 0);
+
+}
+
+
+
+function percentage(value,total){
+
+    if(total===0){
+
+        return "0%";
+
+    }
+
+    return (
+
+        (value/total)*100
+
+    ).toFixed(1)+"%";
+
+}
+
+
+
+function currentDate(){
+
+    return new Date()
+
+        .toLocaleDateString(
+
+            "es-CO"
+
+        );
+
+}
+/*=========================================================
+=              TARJETAS DEL DASHBOARD                     =
+=========================================================*/
+
+function renderDashboardCards(){
+
+    const container = document.getElementById("dashboardCards");
+
+    if(!container) return;
+
+    container.innerHTML = `
+
+        ${createSectionTitle("Resumen Financiero")}
+
+        <div class="dashboard-cards-grid">
+
+            ${createMetricCard({
+                title:"Cartera del mes",
+                value:money(0),
+                subtitle:"Pendiente de cálculo",
+                icon:"fa-solid fa-calendar-days"
+            })}
+
+            ${createMetricCard({
+                title:"Cartera total",
+                value:money(0),
+                subtitle:"Acumulada",
+                icon:"fa-solid fa-wallet"
+            })}
+
+            ${createMetricCard({
+                title:"Ingresos del mes",
+                value:money(0),
+                subtitle:"Recaudado",
+                icon:"fa-solid fa-arrow-trend-up"
+            })}
+
+            ${createMetricCard({
+                title:"Gastos del mes",
+                value:money(0),
+                subtitle:"Ejecutados",
+                icon:"fa-solid fa-arrow-trend-down"
+            })}
+
+        </div>
+
+    `;
+
+}
+
+
+
+/*=========================================================
+=                  ALERTAS                                =
+=========================================================*/
+
+function renderDashboardAlerts(){
+
+    const container = document.getElementById("dashboardAlerts");
+
+    if(!container) return;
+
+    container.innerHTML = `
+
+        ${createSectionTitle("Alertas")}
+
+        ${createAlert({
+
+            type:"warning",
+
+            icon:"fa-solid fa-triangle-exclamation",
+
+            title:"No existen alertas",
+
+            message:"Cuando existan apartamentos con mora superior a tres meses aparecerán aquí."
+
+        })}
+
+    `;
+
+}
+
+
+
+/*=========================================================
+=               ACCIONES RÁPIDAS                          =
+=========================================================*/
+
+function renderDashboardActions(){
+
+    const container = document.getElementById("dashboardActions");
+
+    if(!container) return;
+
+    container.innerHTML = `
+
+        ${createSectionTitle("Acciones Rápidas")}
+
+        <div class="dashboard-actions">
+
+            ${createButton({
+
+                text:"Movimiento Nuevo",
+
+                icon:"fa-solid fa-money-bill-transfer",
+
+                class:"btn-primary",
+
+                action:"newMovement"
+
+            })}
+
+        </div>
+
+    `;
+
+}
+
+
+
+/*=========================================================
+=             MOVIMIENTOS RECIENTES                       =
+=========================================================*/
+
+function renderRecentMovements(){
+
+    const container = document.getElementById("dashboardRecent");
+
+    if(!container) return;
+
+    container.innerHTML = `
+
+        ${createSectionTitle("Últimos movimientos")}
+
+        ${createEmptyState(
+
+            "Todavía no existen movimientos registrados."
+
+        )}
+
+    `;
+
+}
+/*=========================================================
+=                 MOTOR DE NAVEGACIÓN                     =
+=========================================================*/
+
+function navigate(page, data = null){
+
+    STATE.currentPage = page;
+
+    STATE.currentData = data;
+
+    renderCurrentPage();
+
+}
+
+
+
+/*=========================================================
+=            RENDERIZADOR PRINCIPAL                       =
+=========================================================*/
+
+function renderCurrentPage(){
+
+    switch(STATE.currentPage){
+
+        case "login":
+
+            renderLogin();
+
+            break;
+
+        case "dashboard":
+
+            renderDashboard();
+
+            break;
+
+        case "movements":
+
+            renderMovements();
+
+            break;
+
+        case "apartments":
+
+            renderApartments();
+
+            break;
+
+        case "history":
+
+            renderHistory();
+
+            break;
+
+        case "reports":
+
+            renderReports();
+
+            break;
+
+        case "settings":
+
+            renderSettings();
+
+            break;
+
+        default:
+
+            renderLogin();
+
+    }
+
+}
+/*=========================================================
+=          PANTALLAS EN DESARROLLO                        =
+=========================================================*/
+
+function renderMovements(){
+
+    renderApp(`
+
+        <div class="page-placeholder">
+
+            <i class="fa-solid fa-money-bill-transfer"></i>
+
+            <h2>Movimiento Nuevo</h2>
+
+            <p>
+
+                Este módulo será desarrollado en las siguientes entregas.
+
+            </p>
+
+        </div>
+
+    `);
+
+}
+
+
+
+function renderApartments(){
+
+    renderApp(`
+
+        <div class="page-placeholder">
+
+            <i class="fa-solid fa-building"></i>
+
+            <h2>Apartamentos</h2>
+
+            <p>
+
+                Próximamente.
+
+            </p>
+
+        </div>
+
+    `);
+
+}
+
+
+
+function renderHistory(){
+
+    renderApp(`
+
+        <div class="page-placeholder">
+
+            <i class="fa-solid fa-file-lines"></i>
+
+            <h2>Historial</h2>
+
+            <p>
+
+                Próximamente.
+
+            </p>
+
+        </div>
+
+    `);
+
+}
+
+
+
+function renderReports(){
+
+    renderApp(`
+
+        <div class="page-placeholder">
+
+            <i class="fa-solid fa-chart-column"></i>
+
+            <h2>Reportes</h2>
+
+            <p>
+
+                Próximamente.
+
+            </p>
+
+        </div>
+
+    `);
+
+}
+
+
+
+function renderSettings(){
+
+    renderApp(`
+
+        <div class="page-placeholder">
+
+            <i class="fa-solid fa-gear"></i>
+
+            <h2>Configuración</h2>
+
+            <p>
+
+                Próximamente.
+
+            </p>
+
+        </div>
+
+    `);
+
+}
