@@ -976,9 +976,11 @@ document.addEventListener(
 
     "DOMContentLoaded",
 
-    ()=>{
+    async ()=>{
 
-        loadDatabase();
+        restoreSession();
+
+        await loadDatabase();
 
     }
 
